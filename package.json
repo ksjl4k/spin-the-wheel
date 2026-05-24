@@ -1,0 +1,25 @@
+{
+  "name": "spin-the-wheel",
+  "version": "1.0.0",
+  "description": "Interactive spinning wheel web app with customizable segments. Built with vanilla JavaScript, optimized for mobile.",
+  "main": "index.html",
+  "scripts": {
+    "dev": "python -m http.server 3000 || npx http-server -p 3000",
+    "build": "echo 'Static site - no build needed'",
+    "start": "npm run dev"
+  },
+  "keywords": [
+    "wheel",
+    "spinner",
+    "game",
+    "interactive",
+    "web-app",
+    "responsive",
+    "mobile-optimized"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

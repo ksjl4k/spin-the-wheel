@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spin The Wheel - Interactive Spinning Game</title>
+    <meta name="description" content="Interactive spinning wheel web app with customizable segments. Optimize for mobile devices.">
+    <meta name="theme-color" content="#dc143c">
+    <meta property="og:title" content="Spin The Wheel">
+    <meta property="og:description" content="Interactive spinning wheel game with customizable segments">
+    <meta property="og:type" content="website">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-red: #dc143c;
+            --dark-red: #8b0000;
+            --black: #0a0a0a;
+            --white: #ffffff;
+            --accent-gold: #ffd700;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--black) 0%, #1a1a1a 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            overflow-x: hidden;
+            padding: 16px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            text-align: center;
+            font-size: clamp(28px, 8vw, 42px);
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            background: linear-gradient(135deg, var(--primary-red), var(--accent-gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: -8px;
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 13px;
+            color: #999;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .wheel-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 24px;
+            border-radius: 16px;
+            border: 2px solid var(--primary-red);
+            box-shadow: 0 8px 32px rgba(220, 20, 60, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .wheel-container {
+            position: relative;
+            width: 280px;
+            height: 280px;
+            perspective: 1000px;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 0 30px rgba(220, 20, 60, 0.4));
+            transition: filter 0.3s ease;
+        }
+
+        canvas:hover {
+            filter: drop-shadow(0 0 50px rgba(220, 20, 60, 0.6));
+        }
+
+        .pointer {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 12px solid transparent;
+            border-right: 12px solid transparent;
+            border-top: 20px solid var(--primary-red);
+            z-index: 10;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+        }
+
+        .spin-button {
+            width: 100%;
+            padding: 18px;
+            font-size: 18px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            background: linear-gradient(135deg, var(--primary-red), var(--dark-red));
+            color: var(--white);
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 8px 24px rgba(220, 20, 60, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .spin-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.2);
+            transition: left 0.5s ease;
+        }
+
+        .spin-button:hover:not(:disabled)::before {
+            left: 100%;
+        }
+
+        .spin-button:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 32px rgba(220, 20, 60, 0.6);
+        }
+
+        .spin-button:active:not(:disabled) {
+            transform: translateY(-1px);
+        }
+
+        .spin-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .result {
+            text-align: center;
+            padding: 16px;
+            background: rgba(220, 20, 60, 0.15);
+            border: 2px solid var(--primary-red);
+            border-radius: 12px;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--accent-gold);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .result.show {
+            opacity: 1;
+        }
+
+        .settings-section {
+            background: rgba(255, 255, 255, 0.02);
+            padding: 24px;
+            border-radius: 16px;
+            border: 2px solid rgba(220, 20, 60, 0.3);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .settings-title {
+            font-size: 16px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--accent-gold);
+            margin-bottom: 8px;
+        }
+
+        .settings-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .input-group label {
+            font-size: 12px;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(220, 20, 60, 0.4);
+            border-radius: 8px;
+            color: var(--white);
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.12);
+            border-color: var(--primary-red);
+            box-shadow: 0 0 12px rgba(220, 20, 60, 0.3);
+        }
+
+        input[type="text"]::placeholder {
+            color: #555;
+        }
+
+        .add-button,
+        .remove-button,
+        .update-button {
+            padding: 12px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .add-button,
+        .update-button {
+            background: linear-gradient(135deg, var(--primary-red), var(--dark-red));
+            color: var(--white);
+        }
+
+        .add-button:hover,
+        .update-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(220, 20, 60, 0.4);
+        }
+
+        .remove-button {
+            background: rgba(139, 0, 0, 0.3);
+            color: var(--primary-red);
+            border: 1px solid var(--primary-red);
+        }
+
+        .remove-button:hover {
+            background: rgba(139, 0, 0, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .segments-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            padding-right: 8px;
+        }
+
+        .segments-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .segments-list::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+
+        .segments-list::-webkit-scrollbar-thumb {
+            background: var(--primary-red);
+            border-radius: 10px;
+        }
+
+        .segment-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            border-left: 3px solid var(--primary-red);
+        }
+
+        .segment-item span {
+            flex: 1;
+            font-size: 14px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .segment-item button {
+            padding: 6px 10px;
+            font-size: 11px;
+            min-width: 50px;
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                gap: 16px;
+            }
+
+            h1 {
+                font-size: clamp(24px, 6vw, 36px);
+                letter-spacing: 2px;
+            }
+
+            .wheel-section {
+                padding: 16px;
+                gap: 16px;
+            }
+
+            .wheel-container {
+                width: 240px;
+                height: 240px;
+            }
+
+            .spin-button {
+                padding: 16px;
+                font-size: 16px;
+            }
+
+            .settings-section {
+                padding: 16px;
+            }
+
+            .settings-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .button-group {
+                grid-template-columns: 1fr;
+            }
+
+            .input-group {
+                grid-column: 1 / -1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div>
+            <h1>🎡 Spin</h1>
+            <p class="subtitle">The Ultimate Wheel</p>
+        </div>
+
+        <div class="wheel-section">
+            <div class="wheel-container">
+                <div class="pointer"></div>
+                <canvas id="wheelCanvas"></canvas>
+            </div>
+            <button class="spin-button" id="spinBtn">Spin Now</button>
+            <div class="result" id="result"></div>
+        </div>
+
+        <div class="settings-section">
+            <div class="settings-title">⚙️ Customize Wheel</div>
+            
+            <div class="input-group">
+                <label for="newSegment">Add Segment</label>
+                <div class="button-group">
+                    <input type="text" id="newSegment" placeholder="Enter text...">
+                    <button class="add-button" onclick="addSegment()">Add</button>
+                </div>
+            </div>
+
+            <div>
+                <div style="font-size: 12px; color: #999; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px;">Current Segments</div>
+                <div class="segments-list" id="segmentsList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('wheelCanvas');
+        const ctx = canvas.getContext('2d');
+        const spinBtn = document.getElementById('spinBtn');
+        const resultDiv = document.getElementById('result');
+        const newSegmentInput = document.getElementById('newSegment');
+
+        let segments = ['Success', 'Try Again', 'Win Big', 'Close One', 'Jackpot', 'Keep Going'];
+        let rotation = 0;
+        let isSpinning = false;
+
+        const colors = [
+            '#dc143c', // Red
+            '#8b0000', // Dark Red
+            '#ff1744', // Bright Red
+            '#c41e3a', // Crimson
+            '#b22234', // Old Glory Red
+            '#d32f2f'  // Material Red
+        ];
+
+        // Set canvas resolution
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = 280 * dpr;
+        canvas.height = 280 * dpr;
+        ctx.scale(dpr, dpr);
+
+        function drawWheel() {
+            const radius = 140;
+            const centerX = 140;
+            const centerY = 140;
+
+            ctx.clearRect(0, 0, 280, 280);
+
+            const sliceAngle = (2 * Math.PI) / segments.length;
+
+            segments.forEach((segment, i) => {
+                const angle = sliceAngle * i;
+                const nextAngle = sliceAngle * (i + 1);
+
+                // Draw slice
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius, rotation + angle, rotation + nextAngle);
+                ctx.lineTo(centerX, centerY);
+                ctx.fillStyle = colors[i % colors.length];
+                ctx.fill();
+
+                // Draw border
+                ctx.strokeStyle = '#0a0a0a';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Draw text
+                const textAngle = rotation + angle + sliceAngle / 2;
+                ctx.save();
+                ctx.translate(centerX, centerY);
+                ctx.rotate(textAngle);
+                ctx.textAlign = 'right';
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 14px Arial';
+                ctx.fillText(segment, radius - 25, 5);
+                ctx.restore();
+            });
+
+            // Draw center circle
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 25, 0, 2 * Math.PI);
+            ctx.fillStyle = '#ffd700';
+            ctx.fill();
+            ctx.strokeStyle = '#0a0a0a';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Draw center dot
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 8, 0, 2 * Math.PI);
+            ctx.fillStyle = '#0a0a0a';
+            ctx.fill();
+        }
+
+        function spin() {
+            if (isSpinning) return;
+            isSpinning = true;
+            spinBtn.disabled = true;
+            resultDiv.classList.remove('show');
+
+            const spinDuration = 3 + Math.random() * 2; // 3-5 seconds
+            const targetRotation = rotation + (Math.random() * 360 + 1080); // At least 3 full rotations
+            const startRotation = rotation;
+            const startTime = Date.now();
+
+            function animate() {
+                const elapsed = (Date.now() - startTime) / 1000;
+                const progress = Math.min(elapsed / spinDuration, 1);
+
+                // Easing function for smooth deceleration
+                const easeProgress = 1 - Math.pow(1 - progress, 3);
+                rotation = startRotation + (targetRotation - startRotation) * easeProgress;
+
+                drawWheel();
+
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    isSpinning = false;
+                    spinBtn.disabled = false;
+                    showResult();
+                }
+            }
+
+            animate();
+        }
+
+        function showResult() {
+            const sliceAngle = 360 / segments.length;
+            // The pointer is at the top, so we need to find which segment is at the top
+            const normalizedRotation = (360 - (rotation % 360)) % 360;
+            const winningIndex = Math.floor(normalizedRotation / sliceAngle) % segments.length;
+
+            resultDiv.textContent = `🎉 ${segments[winningIndex]}!`;
+            resultDiv.classList.add('show');
+        }
+
+        function addSegment() {
+            const text = newSegmentInput.value.trim();
+            if (text) {
+                segments.push(text);
+                newSegmentInput.value = '';
+                drawWheel();
+                updateSegmentsList();
+            }
+        }
+
+        function removeSegment(index) {
+            if (segments.length > 2) {
+                segments.splice(index, 1);
+                drawWheel();
+                updateSegmentsList();
+            } else {
+                alert('Wheel must have at least 2 segments!');
+            }
+        }
+
+        function updateSegmentsList() {
+            const segmentsList = document.getElementById('segmentsList');
+            segmentsList.innerHTML = segments.map((segment, i) => `
+                <div class="segment-item">
+                    <span>${segment}</span>
+                    <button class="remove-button" onclick="removeSegment(${i})">Remove</button>
+                </div>
+            `).join('');
+        }
+
+        // Event listeners
+        spinBtn.addEventListener('click', spin);
+        newSegmentInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addSegment();
+        });
+
+        // Initialize
+        drawWheel();
+        updateSegmentsList();
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = 280 * dpr;
+            canvas.height = 280 * dpr;
+            ctx.scale(dpr, dpr);
+            drawWheel();
+        });
+    </script>
+</body>
+</html>
